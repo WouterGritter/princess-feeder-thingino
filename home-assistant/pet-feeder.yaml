@@ -1,0 +1,126 @@
+# Home Assistant entities for feederd, defined by hand (feederd does no MQTT discovery).
+#
+# Merge these into the `mqtt:` section of your configuration.yaml. If you already have
+# `button:`, `sensor:` etc. under `mqtt:`, add the items to those lists instead of
+# repeating the keys. Replace `home/pet-feeder` with the root_topic from feederd.conf.
+#
+# Entities you get: number Feed (0-20), button Feed 1 Portion, select LED,
+# binary_sensors Food Low + Feeding, sensors Portions Today / Portions Total /
+# Last Feed / Aux Button.
+
+mqtt:
+  number:
+    - name: 'Feed'
+      unique_id: 'pet_feeder_feed'
+      icon: 'mdi:food-drumstick'
+      device:
+        name: 'Pet Feeder'
+        identifiers: 'pet_feeder'
+      availability_topic: 'home/pet-feeder/online'
+      state_topic: 'home/pet-feeder/feed'
+      command_topic: 'home/pet-feeder/feed'
+      command_template: '{{ value | int }}'
+      min: 0
+      max: 20
+      step: 1
+      mode: box
+      unit_of_measurement: 'portions'
+
+  button:
+    - name: 'Feed 1 Portion'
+      unique_id: 'pet_feeder_feed_1_portion'
+      icon: 'mdi:food-drumstick'
+      device:
+        name: 'Pet Feeder'
+        identifiers: 'pet_feeder'
+      availability_topic: 'home/pet-feeder/online'
+      command_topic: 'home/pet-feeder/feed'
+      payload_press: '1'
+
+  select:
+    - name: 'LED'
+      unique_id: 'pet_feeder_led'
+      icon: 'mdi:led-on'
+      device:
+        name: 'Pet Feeder'
+        identifiers: 'pet_feeder'
+      availability_topic: 'home/pet-feeder/online'
+      state_topic: 'home/pet-feeder/led'
+      command_topic: 'home/pet-feeder/led'
+      options:
+        - 'idle'
+        - 'off'
+        - 'on'
+        - 'slow_blink'
+        - 'fast_blink'
+
+  binary_sensor:
+    - name: 'Food Low'
+      unique_id: 'pet_feeder_food_low'
+      device:
+        name: 'Pet Feeder'
+        identifiers: 'pet_feeder'
+      availability_topic: 'home/pet-feeder/online'
+      state_topic: 'home/pet-feeder/food'
+      payload_on: 'low'
+      payload_off: 'ok'
+      device_class: problem
+
+    - name: 'Feeding'
+      unique_id: 'pet_feeder_feeding'
+      icon: 'mdi:rotate-right'
+      device:
+        name: 'Pet Feeder'
+        identifiers: 'pet_feeder'
+      availability_topic: 'home/pet-feeder/online'
+      state_topic: 'home/pet-feeder/feed'
+      value_template: "{{ 'ON' if value | int(0) > 0 else 'OFF' }}"
+      device_class: running
+
+  sensor:
+    - name: 'Portions Today'
+      unique_id: 'pet_feeder_portions_today'
+      icon: 'mdi:food-drumstick'
+      device:
+        name: 'Pet Feeder'
+        identifiers: 'pet_feeder'
+      availability_topic: 'home/pet-feeder/online'
+      state_topic: 'home/pet-feeder/portions-today'
+      unit_of_measurement: 'portions'
+      state_class: total_increasing
+
+    - name: 'Portions Total'
+      unique_id: 'pet_feeder_portions_total'
+      icon: 'mdi:counter'
+      device:
+        name: 'Pet Feeder'
+        identifiers: 'pet_feeder'
+      availability_topic: 'home/pet-feeder/online'
+      state_topic: 'home/pet-feeder/portions-total'
+      unit_of_measurement: 'portions'
+      state_class: total_increasing
+
+    - name: 'Last Feed'
+      unique_id: 'pet_feeder_last_feed'
+      device:
+        name: 'Pet Feeder'
+        identifiers: 'pet_feeder'
+      availability_topic: 'home/pet-feeder/online'
+      state_topic: 'home/pet-feeder/last-feed'
+      value_template: '{{ value_json.at }}'
+      json_attributes_topic: 'home/pet-feeder/last-feed'
+      device_class: timestamp
+
+    - name: 'Aux Button'
+      unique_id: 'pet_feeder_aux_button'
+      icon: 'mdi:gesture-tap-button'
+      device:
+        name: 'Pet Feeder'
+        identifiers: 'pet_feeder'
+      availability_topic: 'home/pet-feeder/online'
+      state_topic: 'home/pet-feeder/aux-button'
+      device_class: enum
+      options:
+        - 'idle'
+        - 'pressed'
+        - 'held'

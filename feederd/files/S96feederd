@@ -1,0 +1,27 @@
+#!/bin/sh
+# feederd: Princess feeder MCU <-> MQTT. A shell loop restarts it if it dies,
+# loudly in the log.
+
+DAEMON=/usr/sbin/feederd
+LOOP_PID=/run/feederd-loop.pid
+
+start() {
+	echo "Starting feederd"
+	start-stop-daemon -S -b -m -p "$LOOP_PID" -x /bin/sh -- -c \
+		"while true; do $DAEMON; rc=\$?; logger -p daemon.err -t feederd \"exited with \$rc, restarting in 5 s\"; sleep 5; done"
+}
+
+stop() {
+	echo "Stopping feederd"
+	[ -f "$LOOP_PID" ] && kill "$(cat "$LOOP_PID")" 2>/dev/null
+	rm -f "$LOOP_PID"
+	killall feederd 2>/dev/null
+	return 0
+}
+
+case "$1" in
+	start) start ;;
+	stop) stop ;;
+	restart) stop; sleep 1; start ;;
+	*) echo "Usage: $0 {start|stop|restart}"; exit 1 ;;
+esac
